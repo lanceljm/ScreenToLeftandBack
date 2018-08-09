@@ -1,0 +1,37 @@
+# ScreenToLeftandBack
+gesture right to left ，and back（pop）
+
+使用 navigationController 进行全局的向右滑动返回
+
+核心代理：
+  id target = self.interactivePopGestureRecognizer.delegate;
+  SEL handler = NSSelectorFromString(@"handleNavigationTransition:");
+  
+创建pan手势 作用范围是全屏
+    UIPanGestureRecognizer * fullScreenGes = [[UIPanGestureRecognizer alloc]initWithTarget:target action:handler];
+    fullScreenGes.delegate = self;
+    [targetView addGestureRecognizer:fullScreenGes];
+    
+ 
+ 防止导航控制器只有一个rootViewcontroller时触发手势
+- (BOOL)gestureRecognizerShouldBegin:(UIPanGestureRecognizer *)gestureRecognizer {
+    // 根据具体控制器对象决定是否开启全屏右滑返回
+    for (UIViewController *viewController in self.blackList) {
+        if ([self topViewController] == viewController) {
+            return NO;
+        }
+    }
+   
+    
+    if ([[self valueForKey:@"_isTransitioning"] boolValue]) {
+        return NO;
+    }
+    
+    // 解决右滑和UITableView左滑删除的冲突
+    CGPoint translation = [gestureRecognizer translationInView:gestureRecognizer.view];
+    if (translation.x <= 0) {
+        return NO;
+    }
+    
+    return self.childViewControllers.count == 1 ? NO : YES;
+}
